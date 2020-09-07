@@ -41,6 +41,7 @@ volumes:
 steps:
 - name: build
   image: rustlang/rust:nightly
+  failure: ignore
   volumes:
     - name: cargo-cache
       path: /tmp/cargo-cache
@@ -51,6 +52,7 @@ steps:
 
 - name: test
   image: rustlang/rust:nightly
+  failure: ignore
   volumes:
     - name: cargo-cache
       path: /tmp/cargo-cache
@@ -61,6 +63,6 @@ steps:
 
 ---
 kind: signature
-hmac: ec24f0bf6ff534308483b76349f38970170e0a7334c0f20175096287c6228a74
+hmac: ef2f1b4a800fe0905967bd38488a20d78fa97b1635f26bb0e3991841b84d84a5
 
 ...
