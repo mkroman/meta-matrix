@@ -1,0 +1,68 @@
+---
+kind: pipeline
+name: rust-stable
+
+volumes:
+- name: cargo-cache
+  host:
+    path: /var/lib/cargo-cache
+
+steps:
+- name: build
+  image: rust:1.46
+  volumes:
+    - name: cargo-cache
+      path: /tmp/cargo-cache
+  environment:
+    CARGO_HOME: /tmp/cargo-cache
+  commands:
+    - cargo build
+
+- name: test
+  image: rust:1.46
+  volumes:
+    - name: cargo-cache
+      path: /tmp/cargo-cache
+  environment:
+    CARGO_HOME: /tmp/cargo-cache
+  commands:
+    - cargo test
+    - git rev-parse HEAD > .tags
+
+---
+kind: pipeline
+name: rust-nightly
+
+volumes:
+- name: cargo-cache
+  host:
+    path: /var/lib/cargo-cache
+
+steps:
+- name: build
+  image: rustlang/rust:nightly
+  failure: ignore
+  volumes:
+    - name: cargo-cache
+      path: /tmp/cargo-cache
+  environment:
+    CARGO_HOME: /tmp/cargo-cache
+  commands:
+    - cargo build
+
+- name: test
+  image: rustlang/rust:nightly
+  failure: ignore
+  volumes:
+    - name: cargo-cache
+      path: /tmp/cargo-cache
+  environment:
+    CARGO_HOME: /tmp/cargo-cache
+  commands:
+    - cargo test
+
+---
+kind: signature
+hmac: ef2f1b4a800fe0905967bd38488a20d78fa97b1635f26bb0e3991841b84d84a5
+
+...
