@@ -22,7 +22,10 @@ rink-core = { version = "0.5" }
 
 [dependencies.matrix-sdk]
 default-features = false
-git = "https://github.com/matrix-org/matrix-rust-sdk"
 features = ["encryption", "sqlite_cryptostore", "messages", "native-tls"]
+git = "https://github.com/matrix-org/matrix-rust-sdk"
 version = "0.1"
 
+[profile.release]
+codegen-units = 1
+lto = "fat"
