@@ -43,7 +43,7 @@ steps:
   image: rust:1.46
   commands:
     - mkdir -p artifacts/$(cat .tags)
-    - cp target/release/meta-matrix artifacts/$(cat .tags)
+    - cp target/release/meta-matrix artifacts/$(cat .tags)/meta-matrix
 
 - name: upload-artifacts
   image: plugins/s3
@@ -91,6 +91,6 @@ steps:
 
 ---
 kind: signature
-hmac: a467bd0d37c886129054ed258367dd2ff30d8ceb5fc613ef48ef9617a9ea857e
+hmac: 1f3e7a4f29e041e78d5efc218c2a78bb6c00619aea95b2b3aea9600900df2298
 
 ...
