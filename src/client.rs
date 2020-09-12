@@ -6,13 +6,14 @@ use url::Url;
 use crate::{Config, Error};
 
 pub struct MatrixClient {
-    /// The inner, slightly lower-level Matrix client
+    /// The inner, slightly lower level Matrix client
     inner: Client,
+    /// The parsed config file
     config: Config,
 }
 
 impl MatrixClient {
-    /// Creates a new MatrixClient with a given `config`
+    /// Creates a new MatrixClient with a given parsed `config`
     pub fn with_config(config: Config) -> Result<MatrixClient, Error> {
         let client_config = ClientConfig::new();
 
@@ -27,7 +28,8 @@ impl MatrixClient {
         })
     }
 
-    pub async fn login_and_sync(&self) -> Result<(), Error> {
+    /// Authenticates with the homeserver
+    pub async fn login(&self) -> Result<(), Error> {
         let client = &self.inner;
 
         client
@@ -38,6 +40,13 @@ impl MatrixClient {
                 Some("rust-sdk"),
             )
             .await?;
+
+        Ok(())
+    }
+
+    /// Continually `sync`s with the homeserver for new updates until an error occurs
+    pub async fn poll(&self) -> Result<(), Error> {
+        let client = &self.inner;
 
         // Sync to skip old messages
         client.sync(SyncSettings::default()).await?;
