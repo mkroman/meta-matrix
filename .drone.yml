@@ -29,6 +29,36 @@ steps:
     - cargo test
     - git rev-parse HEAD > .tags
 
+- name: release
+  image: rust:1.46
+  volumes:
+    - name: cargo-cache
+      path: /tmp/cargo-cache
+  environment:
+    CARGO_HOME: /tmp/cargo-cache
+  commands:
+    - cargo build --release
+
+- name: prep-upload
+  image: rust:1.46
+  commands:
+    - mkdir -p artifacts/$(cat .tags)
+    - cp target/release/meta-matrix artifacts/$(cat .tags)/meta-matrix
+
+- name: upload-artifacts
+  image: plugins/s3
+  settings:
+    bucket: meta-matrix
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: artifacts/**/*
+    target: /
+    acl: public-read
+    region: nl-ams
+    endpoint: https://s3.nl-ams.scw.cloud
+
 ---
 kind: pipeline
 name: rust-nightly
@@ -63,6 +93,6 @@ steps:
 
 ---
 kind: signature
-hmac: ef2f1b4a800fe0905967bd38488a20d78fa97b1635f26bb0e3991841b84d84a5
+hmac: 1c809a23e654986ed4c02231a8441a5dee9c4ba51729220a23fc5a2140ba8b7e
 
 ...
