@@ -54,7 +54,7 @@ steps:
     secret_key:
       from_secret: s3_secret_key
     source: artifacts/**/*
-    target: /artifacts/
+    target: /
     region: nl-ams
     endpoint: https://s3.nl-ams.scw.cloud
 
@@ -92,6 +92,6 @@ steps:
 
 ---
 kind: signature
-hmac: 57eba54d1e933d5acf342525ef62914baffe5dc55cb30aa5f53864ceb62f1b63
+hmac: 15e164954d16e196c73721ce28b3efd15d009efd158ae07d68d0d8c64d43ab09
 
 ...
