@@ -27,6 +27,7 @@ steps:
   environment:
     CARGO_HOME: /tmp/cargo-cache
   commands:
+    - apt update && apt install -y lld
     - cargo test
     - git rev-parse HEAD > .tags
 
@@ -38,6 +39,7 @@ steps:
   environment:
     CARGO_HOME: /tmp/cargo-cache
   commands:
+    - apt update && apt install -y lld
     - cargo build --release
 
 - name: prep-upload
@@ -93,6 +95,6 @@ steps:
 
 ---
 kind: signature
-hmac: 45857f94b769784c6ff105776c39d159725b7cd9978260ee2f6899ba7a1d9239
+hmac: 05164ffb6631308319273f49d25161ffd2cdfe23ca191ca083bba2f3b44848b4
 
 ...
