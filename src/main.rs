@@ -6,6 +6,8 @@ use log::debug;
 mod client;
 mod config;
 mod error;
+mod plugin;
+mod plugins;
 
 use client::MatrixClient;
 pub use config::Config;
@@ -24,7 +26,7 @@ fn config_file_path() -> String {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::init();
+    pretty_env_logger::init();
 
     // Load the config
     let config_path = config_file_path();
@@ -36,7 +38,9 @@ async fn main() -> anyhow::Result<()> {
         &config.matrix.username, &config.matrix.homeserver
     );
 
-    let client = MatrixClient::with_config(config)?;
+    let mut client = MatrixClient::with_config(config)?;
+
+    client.init_plugins()?;
 
     client.login().await?;
     client.poll().await?;

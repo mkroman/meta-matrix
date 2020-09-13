@@ -3,6 +3,8 @@
 use matrix_sdk::{Client, ClientConfig, SyncSettings};
 use url::Url;
 
+use crate::plugin::PluginRegistry;
+use crate::plugins;
 use crate::{Config, Error};
 
 pub struct MatrixClient {
@@ -10,6 +12,8 @@ pub struct MatrixClient {
     inner: Client,
     /// The parsed config file
     config: Config,
+    /// The plugin registry
+    plugin_registry: PluginRegistry,
 }
 
 impl MatrixClient {
@@ -25,6 +29,7 @@ impl MatrixClient {
         Ok(MatrixClient {
             inner: client,
             config,
+            plugin_registry: PluginRegistry::new(),
         })
     }
 
@@ -54,6 +59,14 @@ impl MatrixClient {
         // Sync forever with our stored token
         let settings = SyncSettings::default().token(client.sync_token().await.unwrap());
         client.sync_forever(settings, |_| async {}).await;
+
+        Ok(())
+    }
+
+    /// Initializes the plugin registry
+    pub fn init_plugins(&mut self) -> Result<(), Error> {
+        self.plugin_registry
+            .register::<plugins::google_search::GoogleSearchPlugin>()?;
 
         Ok(())
     }
