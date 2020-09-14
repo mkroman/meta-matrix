@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
 
     let mut client = MatrixClient::with_config(config)?;
 
-    client.init_plugins()?;
+    client.init_plugins().await?;
 
     client.login().await?;
     client.poll().await?;

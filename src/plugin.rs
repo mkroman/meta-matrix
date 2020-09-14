@@ -1,5 +1,7 @@
 use async_trait::async_trait;
 use log::{debug, error};
+use matrix_sdk::events::room::message::TextMessageEventContent;
+use matrix_sdk_common::identifiers::{RoomId, UserId};
 
 use crate::Error;
 
@@ -9,7 +11,7 @@ pub struct PluginRegistry {
 }
 
 #[async_trait]
-pub trait Plugin {
+pub trait Plugin: Send + Sync {
     /// Returns the full Rust module path of the plugin
     fn module_path(&self) -> &'static str {
         std::any::type_name::<Self>()
@@ -17,14 +19,23 @@ pub trait Plugin {
 
     /// Returns the type name fo the plugin
     fn name(&self) -> &'static str {
-        self.module_path().split("::").last().unwrap()
+        self.module_path()
+            .split("::")
+            .last()
+            .expect("could not extract module name")
     }
 
     fn new() -> Result<Self, Error>
     where
         Self: Sized;
 
-    async fn handle_room_message(&self) -> Result<(), Error>;
+    async fn on_room_text_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &TextMessageEventContent,
+    ) {
+    }
 }
 
 impl PluginRegistry {
@@ -50,6 +61,11 @@ impl PluginRegistry {
 
         Ok(())
     }
+
+    /// Returns a ref slice of all the plugins
+    pub fn plugins(&self) -> &[Box<dyn Plugin>] {
+        self.plugins.as_ref()
+    }
 }
 
 #[cfg(test)]
@@ -63,8 +79,13 @@ mod test {
         fn new() -> Result<TestPlugin, Error> {
             Ok(TestPlugin {})
         }
-        async fn handle_room_message(&self) -> Result<(), Error> {
-            Ok(())
+
+        async fn on_room_text_message(
+            &self,
+            _user: UserId,
+            _room: RoomId,
+            _message: TextMessageEventContent,
+        ) {
         }
     }
 

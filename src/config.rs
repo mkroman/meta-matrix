@@ -8,14 +8,14 @@ use serde::Deserialize;
 use crate::Error;
 
 /// The root config struct
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     /// The matrix-specific configuration
     pub matrix: MatrixConfig,
 }
 
 /// The matrix-specific configuration
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct MatrixConfig {
     /// The homeserver URL to connect to
     pub homeserver: String,

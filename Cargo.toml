@@ -19,6 +19,7 @@ lazy_static = "1.4.0"
 async-trait = "0.1"
 reqwest = { version = "0.10.8", features = ["gzip", "blocking"] }
 rink-core = { version = "0.5" }
+matrix-sdk-common = { git = "https://github.com/matrix-org/matrix-rust-sdk", version = "0.1" }
 
 [dependencies.matrix-sdk]
 default-features = false
@@ -26,6 +27,6 @@ features = ["encryption", "sqlite_cryptostore", "messages", "native-tls"]
 git = "https://github.com/matrix-org/matrix-rust-sdk"
 version = "0.1"
 
-[profile.release]
-codegen-units = 1
-lto = "fat"
+# [profile.release]
+# codegen-units = 1
+# lto = "fat"

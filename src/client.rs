@@ -1,25 +1,79 @@
 //! This is a module that contains a high-level Matrix client
 
-use matrix_sdk::{Client, ClientConfig, SyncSettings};
+use std::sync::Arc;
+use tokio::sync::{Mutex, RwLock};
+
+use async_trait::async_trait;
+use log::debug;
+use matrix_sdk::{
+    events::{
+        room::message::{MessageEventContent, TextMessageEventContent},
+        AnyMessageEventContent, SyncMessageEvent,
+    },
+    Client, ClientConfig, EventEmitter, JsonStore, SyncRoom, SyncSettings,
+};
 use url::Url;
 
 use crate::plugin::PluginRegistry;
 use crate::plugins;
 use crate::{Config, Error};
 
+#[derive(Clone)]
 pub struct MatrixClient {
     /// The inner, slightly lower level Matrix client
-    inner: Client,
+    inner: Arc<RwLock<Client>>,
     /// The parsed config file
-    config: Config,
+    config: Arc<Mutex<Config>>,
     /// The plugin registry
-    plugin_registry: PluginRegistry,
+    plugin_registry: Arc<RwLock<PluginRegistry>>,
+}
+
+struct PluginEventDispatcher {
+    client: MatrixClient,
+}
+
+impl PluginEventDispatcher {
+    pub fn new(client: MatrixClient) -> PluginEventDispatcher {
+        PluginEventDispatcher { client }
+    }
+}
+
+#[async_trait]
+impl EventEmitter for PluginEventDispatcher {
+    async fn on_room_message(&self, room: SyncRoom, event: &SyncMessageEvent<MessageEventContent>) {
+        if let SyncRoom::Joined(room) = room {
+            match event {
+                SyncMessageEvent {
+                    sender,
+                    content: MessageEventContent::Text(text_message),
+                    ..
+                } => {
+                    let user_id = sender;
+                    let room_id = room.read().await.room_id.clone();
+
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_text_message(user_id, &room_id, text_message)
+                            .await;
+                    }
+
+                    println!("Received text message: {:?}", text_message);
+                }
+                _ => {}
+            }
+
+            debug!("Received room message");
+        }
+    }
 }
 
 impl MatrixClient {
     /// Creates a new MatrixClient with a given parsed `config`
     pub fn with_config(config: Config) -> Result<MatrixClient, Error> {
-        let client_config = ClientConfig::new();
+        let store = JsonStore::open("matrix_state").unwrap();
+        let client_config = ClientConfig::new()
+            .state_store(Box::new(store))
+            .store_path("/home/mk/Projects/meta-matrix/test");
 
         let homeserver_url =
             Url::parse(&config.matrix.homeserver).map_err(Error::HomeserverParseError)?;
@@ -27,31 +81,36 @@ impl MatrixClient {
         let client = Client::new_with_config(homeserver_url, client_config)?;
 
         Ok(MatrixClient {
-            inner: client,
-            config,
-            plugin_registry: PluginRegistry::new(),
+            inner: Arc::new(RwLock::new(client)),
+            config: Arc::new(Mutex::new(config)),
+            plugin_registry: Arc::new(RwLock::new(PluginRegistry::new())),
         })
     }
 
     /// Authenticates with the homeserver
     pub async fn login(&self) -> Result<(), Error> {
-        let client = &self.inner;
+        let mut client = self.inner.write().await;
+        let config = self.config.lock().await;
 
         client
             .login(
-                &self.config.matrix.username,
-                &self.config.matrix.password,
-                None,
-                Some("rust-sdk"),
+                &config.matrix.username,
+                &config.matrix.password,
+                Some("development3"),
+                Some("meta-matrix"),
             )
             .await?;
+
+        client
+            .add_event_emitter(Box::new(PluginEventDispatcher::new(self.clone())))
+            .await;
 
         Ok(())
     }
 
     /// Continually `sync`s with the homeserver for new updates until an error occurs
     pub async fn poll(&self) -> Result<(), Error> {
-        let client = &self.inner;
+        let client = self.inner.read().await;
 
         // Sync to skip old messages
         client.sync(SyncSettings::default()).await?;
@@ -64,9 +123,10 @@ impl MatrixClient {
     }
 
     /// Initializes the plugin registry
-    pub fn init_plugins(&mut self) -> Result<(), Error> {
-        self.plugin_registry
-            .register::<plugins::google_search::GoogleSearchPlugin>()?;
+    pub async fn init_plugins(&mut self) -> Result<(), Error> {
+        let mut registry = self.plugin_registry.write().await;
+
+        registry.register::<plugins::google_search::GoogleSearchPlugin>()?;
 
         Ok(())
     }
