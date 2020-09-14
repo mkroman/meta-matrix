@@ -82,9 +82,9 @@ mod test {
 
         async fn on_room_text_message(
             &self,
-            _user: UserId,
-            _room: RoomId,
-            _message: TextMessageEventContent,
+            _user: &UserId,
+            _room: &RoomId,
+            _message: &TextMessageEventContent,
         ) {
         }
     }
