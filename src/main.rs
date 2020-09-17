@@ -19,7 +19,7 @@ pub use error::Error;
 /// `config.toml` in cwd
 fn config_file_path() -> String {
     match env::var("META_MATRIX_CONFIG_FILE") {
-        Ok(path) => path.to_string(),
+        Ok(path) => path,
         Err(_) => "config.toml".to_string(),
     }
 }

@@ -4,12 +4,8 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
 use async_trait::async_trait;
-use log::debug;
 use matrix_sdk::{
-    events::{
-        room::message::{MessageEventContent, TextMessageEventContent},
-        AnyMessageEventContent, SyncMessageEvent,
-    },
+    events::{room::message::MessageEventContent, SyncMessageEvent},
     Client, ClientConfig, EventEmitter, JsonStore, SyncRoom, SyncSettings,
 };
 use url::Url;
@@ -42,27 +38,81 @@ impl PluginEventDispatcher {
 impl EventEmitter for PluginEventDispatcher {
     async fn on_room_message(&self, room: SyncRoom, event: &SyncMessageEvent<MessageEventContent>) {
         if let SyncRoom::Joined(room) = room {
-            match event {
-                SyncMessageEvent {
-                    sender,
-                    content: MessageEventContent::Text(text_message),
-                    ..
-                } => {
-                    let user_id = sender;
-                    let room_id = room.read().await.room_id.clone();
+            let user_id = &event.sender;
+            let room_id = room.read().await.room_id.clone();
+
+            // TODO: Figure out how to use dynamic dispatch on the Plugin trait instead of this
+            // nonsense
+            match &event.content {
+                MessageEventContent::Audio(content) => {
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_audio_message(user_id, &room_id, content)
+                            .await;
+                    }
+                }
+                MessageEventContent::Emote(content) => {
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_emote_message(user_id, &room_id, content)
+                            .await;
+                    }
+                }
+                MessageEventContent::File(content) => {
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_file_message(user_id, &room_id, content)
+                            .await;
+                    }
+                }
+                MessageEventContent::Image(content) => {
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_image_message(user_id, &room_id, content)
+                            .await;
+                    }
+                }
+                MessageEventContent::Location(content) => {
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_location_message(user_id, &room_id, content)
+                            .await;
+                    }
+                }
+                MessageEventContent::Notice(content) => {
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_notice_message(user_id, &room_id, content)
+                            .await;
+                    }
+                }
+                MessageEventContent::ServerNotice(content) => {
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_server_notice_message(user_id, &room_id, content)
+                            .await;
+                    }
+                }
+                MessageEventContent::Text(content) => {
+                    println!("Received text message: {:?}", content);
 
                     for plugin in self.client.plugin_registry.read().await.plugins().iter() {
                         plugin
-                            .on_room_text_message(user_id, &room_id, text_message)
+                            .on_room_text_message(user_id, &room_id, content)
                             .await;
                     }
+                }
+                MessageEventContent::Video(content) => {
+                    println!("Received video message: {:?}", content);
 
-                    println!("Received text message: {:?}", text_message);
+                    for plugin in self.client.plugin_registry.read().await.plugins().iter() {
+                        plugin
+                            .on_room_video_message(user_id, &room_id, content)
+                            .await;
+                    }
                 }
                 _ => {}
             }
-
-            debug!("Received room message");
         }
     }
 }
@@ -96,7 +146,7 @@ impl MatrixClient {
             .login(
                 &config.matrix.username,
                 &config.matrix.password,
-                Some("development3"),
+                Some("development"),
                 Some("meta-matrix"),
             )
             .await?;

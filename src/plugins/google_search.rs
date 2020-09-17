@@ -27,8 +27,8 @@ impl Plugin for GoogleSearchPlugin {
 
     async fn on_room_text_message(
         &self,
-        user: &UserId,
-        room: &RoomId,
+        _user: &UserId,
+        _room: &RoomId,
         message: &TextMessageEventContent,
     ) {
         if message.body.starts_with(".g ") {

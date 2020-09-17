@@ -1,6 +1,10 @@
 use async_trait::async_trait;
 use log::{debug, error};
-use matrix_sdk::events::room::message::TextMessageEventContent;
+use matrix_sdk::events::room::message::{
+    AudioMessageEventContent, EmoteMessageEventContent, FileMessageEventContent,
+    ImageMessageEventContent, LocationMessageEventContent, NoticeMessageEventContent,
+    ServerNoticeMessageEventContent, TextMessageEventContent, VideoMessageEventContent,
+};
 use matrix_sdk_common::identifiers::{RoomId, UserId};
 
 use crate::Error;
@@ -29,11 +33,84 @@ pub trait Plugin: Send + Sync {
     where
         Self: Sized;
 
+    /// Called when a audio message is received in a room
+    async fn on_room_audio_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &AudioMessageEventContent,
+    ) {
+    }
+
+    /// Called when a emote message is received in a room
+    async fn on_room_emote_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &EmoteMessageEventContent,
+    ) {
+    }
+
+    /// Called when a file message is received in a room
+    async fn on_room_file_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &FileMessageEventContent,
+    ) {
+    }
+
+    /// Called when a image message is received in a room
+    async fn on_room_image_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &ImageMessageEventContent,
+    ) {
+    }
+
+    /// Called when a location message is received in a room
+    async fn on_room_location_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &LocationMessageEventContent,
+    ) {
+    }
+
+    /// Called when a notice message is received in a room
+    async fn on_room_notice_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &NoticeMessageEventContent,
+    ) {
+    }
+
+    /// Called when a server notice message is received in a room
+    async fn on_room_server_notice_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &ServerNoticeMessageEventContent,
+    ) {
+    }
+
+    /// Called when a text message is received in a room
     async fn on_room_text_message(
         &self,
         _user: &UserId,
         _room: &RoomId,
         _message: &TextMessageEventContent,
+    ) {
+    }
+
+    /// Called when a video message is received in a room
+    async fn on_room_video_message(
+        &self,
+        _user: &UserId,
+        _room: &RoomId,
+        _message: &VideoMessageEventContent,
     ) {
     }
 }
