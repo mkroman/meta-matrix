@@ -29,6 +29,16 @@ steps:
     - cargo test
     - git rev-parse HEAD > .tags
 
+- name: release
+  image: rust:1.46
+  volumes:
+    - name: cargo-cache
+      path: /tmp/cargo-cache
+  environment:
+    CARGO_HOME: /tmp/cargo-cache
+  commands:
+    - cargo build --release
+
 - name: prep-upload
   image: rust:1.46
   commands:
@@ -88,6 +98,6 @@ steps:
 
 ---
 kind: signature
-hmac: 03299cbbebd4884482fef93d99eb9e01a833c74b62c3e4381f6d4cbf3c547e60
+hmac: 18b6a9e29bb9b1dccad1c6f4afd69d833a522edd29c23e7a5928a807cdfdc3c4
 
 ...
