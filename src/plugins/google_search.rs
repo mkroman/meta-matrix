@@ -86,10 +86,10 @@ impl GoogleSearchPlugin {
             .await?;
         let body = req.text().await?;
 
-        self.parse_search_page(&body)
+        Self::parse_search_page(&body)
     }
 
-    fn parse_search_page(&self, body: &str) -> Result<Option<SearchResult>, GoogleSearchError> {
+    fn parse_search_page(body: &str) -> Result<Option<SearchResult>, GoogleSearchError> {
         let document = Html::parse_document(body);
         let search_body = document
             .select(&SEARCH_BODY_SELECTOR)
@@ -109,6 +109,7 @@ impl Plugin for GoogleSearchPlugin {
     fn new(client: Client) -> Result<Self, Error> {
         let http_client = reqwest::Client::builder()
             .user_agent("Mozilla/5.0 (X11; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0")
+            .gzip(true)
             .build()
             .map_err(Error::ReqwestBuildError)?;
 
@@ -154,10 +155,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_search() {
-        let url: url::Url = "http://example.com".parse().unwrap();
-        let client = Client::new(url);
-        let plugin = GoogleSearchPlugin::new(client.unwrap()).unwrap();
-
-        assert!(plugin.search("hello world").await.is_ok());
+        assert!(GoogleSearchPlugin::parse_search_page(include_str!(
+            "../../test/google-search-page.html"
+        ))
+        .is_ok());
     }
 }
