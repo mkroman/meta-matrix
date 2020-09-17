@@ -42,8 +42,12 @@ steps:
 - name: prep-upload
   image: rust:1.46
   commands:
-    - mkdir -p artifacts/$(cat .tags)
-    - cp target/release/meta-matrix artifacts/$(cat .tags)/meta-matrix
+    - export BUILD_NUMBER="${DRONE_BUILD_NUMBER}.${DRONE_STAGE_NUMBER}"
+    - export SHORT_COMMIT=$(git rev-parse --short $DRONE_COMMIT)
+    - mkdir -p artifacts/builds/$BUILD_NUMBER
+    - git archive $DRONE_COMMIT | bzip2 > artifacts/builds/$BUILD_NUMBER/$DRONE_REPO_NAME-$SHORT_COMMIT.tar.bz2
+    - gzip < target/release/meta-matrix > artifacts/builds/$BUILD_NUMBER/meta-matrix-$SHORT_COMMIT-linux-amd64.gz
+    - find artifacts/
 
 - name: upload-artifacts
   image: plugins/s3
@@ -93,6 +97,6 @@ steps:
 
 ---
 kind: signature
-hmac: 1c809a23e654986ed4c02231a8441a5dee9c4ba51729220a23fc5a2140ba8b7e
+hmac: cb1087dd0c0b93afec2b22c5cafede377bd78b45b14ec7ffe543a4ea6651c02e
 
 ...
