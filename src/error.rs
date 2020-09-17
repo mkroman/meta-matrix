@@ -17,4 +17,7 @@ pub enum Error {
 
     #[error("unable to parse homeserver url")]
     HomeserverParseError(#[from] url::ParseError),
+
+    #[error("could not build http client")]
+    ReqwestBuildError(#[from] reqwest::Error),
 }

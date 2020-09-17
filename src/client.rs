@@ -151,6 +151,9 @@ impl MatrixClient {
             )
             .await?;
 
+        // Sync to skip old messages
+        client.sync(SyncSettings::default()).await?;
+
         client
             .add_event_emitter(Box::new(PluginEventDispatcher::new(self.clone())))
             .await;
@@ -161,9 +164,6 @@ impl MatrixClient {
     /// Continually `sync`s with the homeserver for new updates until an error occurs
     pub async fn poll(&self) -> Result<(), Error> {
         let client = self.inner.read().await;
-
-        // Sync to skip old messages
-        client.sync(SyncSettings::default()).await?;
 
         // Sync forever with our stored token
         let settings = SyncSettings::default().token(client.sync_token().await.unwrap());
