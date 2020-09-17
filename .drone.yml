@@ -29,16 +29,6 @@ steps:
     - cargo test
     - git rev-parse HEAD > .tags
 
-- name: release
-  image: rust:1.46
-  volumes:
-    - name: cargo-cache
-      path: /tmp/cargo-cache
-  environment:
-    CARGO_HOME: /tmp/cargo-cache
-  commands:
-    - cargo build --release
-
 - name: prep-upload
   image: rust:1.46
   commands:
@@ -46,8 +36,7 @@ steps:
     - export SHORT_COMMIT=$(git rev-parse --short $DRONE_COMMIT)
     - mkdir -p artifacts/builds/$BUILD_NUMBER
     - git archive $DRONE_COMMIT | bzip2 > artifacts/builds/$BUILD_NUMBER/$DRONE_REPO_NAME-$SHORT_COMMIT.tar.bz2
-    - gzip target/release/meta-matrix
-    - cp target/release/meta-matrix.gz artifacts/builds/$BUILD_NUMBER/meta-matrix-$SHORT_COMMIT-linux-amd64.gz
+    - gzip < target/release/meta-matrix > artifacts/builds/$BUILD_NUMBER/meta-matrix-$SHORT_COMMIT-linux-amd64.gz
     - find artifacts/
 
 - name: upload-artifacts
@@ -98,6 +87,6 @@ steps:
 
 ---
 kind: signature
-hmac: 18b6a9e29bb9b1dccad1c6f4afd69d833a522edd29c23e7a5928a807cdfdc3c4
+hmac: be40ae800e08d5bdbe6b64949620666bb1bbbfab78e07dc60fce1ba9f5f73345
 
 ...
