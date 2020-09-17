@@ -177,6 +177,7 @@ impl MatrixClient {
         let mut registry = self.plugin_registry.write().await;
 
         registry.register::<plugins::google_search::GoogleSearchPlugin>()?;
+        registry.register::<plugins::choices::ChoicesPlugin>()?;
 
         Ok(())
     }

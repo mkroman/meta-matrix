@@ -49,16 +49,18 @@ struct SearchResult {
     url: Url,
 }
 
+macro_rules! select {
+    ($root:tt, $sel:expr) => {
+        $root.select($sel).next()
+    };
+}
+
 impl SearchResult {
     fn from_element(element: &ElementRef) -> Result<SearchResult, GoogleSearchError> {
-        let header_link = element
-            .select(&HEADER_LINK_SELECTOR)
-            .next()
+        let header_link = select!(element, &HEADER_LINK_SELECTOR)
             .ok_or_else(|| GoogleSearchError::MissingElement("header_link"))?;
 
-        let header_title = header_link
-            .select(&SUB_HEADER_SELECTOR)
-            .next()
+        let header_title = select!(header_link, &SUB_HEADER_SELECTOR)
             .ok_or_else(|| GoogleSearchError::MissingElement("sub_header"))?
             .text()
             .collect::<Vec<_>>()
@@ -91,14 +93,10 @@ impl GoogleSearchPlugin {
 
     fn parse_search_page(body: &str) -> Result<Option<SearchResult>, GoogleSearchError> {
         let document = Html::parse_document(body);
-        let search_body = document
-            .select(&SEARCH_BODY_SELECTOR)
-            .next()
-            .ok_or(GoogleSearchError::NoSearchBody)?;
-        let result = search_body
-            .select(&SEARCH_RESULT_SELECTOR)
-            .next()
-            .ok_or(GoogleSearchError::NoSearchResults)?;
+        let body = select!(document, &SEARCH_BODY_SELECTOR)
+            .ok_or_else(|| GoogleSearchError::NoSearchBody)?;
+        let result = select!(body, &SEARCH_RESULT_SELECTOR)
+            .ok_or_else(|| GoogleSearchError::NoSearchResults)?;
 
         SearchResult::from_element(&result).map(|x| Some(x))
     }
@@ -152,12 +150,15 @@ impl Plugin for GoogleSearchPlugin {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[tokio::test]
     async fn test_search() {
-        assert!(GoogleSearchPlugin::parse_search_page(include_str!(
-            "../../test/google-search-page.html"
-        ))
-        .is_ok());
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("test")
+            .join("google-search-page.html");
+        let body = std::fs::read_to_string(path).unwrap();
+
+        assert!(GoogleSearchPlugin::parse_search_page(&body).is_ok());
     }
 }

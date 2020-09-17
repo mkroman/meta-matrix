@@ -21,6 +21,8 @@ reqwest = { version = "0.10.8", features = ["gzip", "blocking"] }
 rink-core = { version = "0.5" }
 matrix-sdk-common = { git = "https://github.com/matrix-org/matrix-rust-sdk", version = "0.1" }
 scraper = "0.12"
+regex = "1"
+rand = "0.7"
 
 [dependencies.matrix-sdk]
 default-features = false
