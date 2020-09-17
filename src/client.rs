@@ -131,9 +131,9 @@ impl MatrixClient {
         let client = Client::new_with_config(homeserver_url, client_config)?;
 
         Ok(MatrixClient {
-            inner: Arc::new(RwLock::new(client)),
+            inner: Arc::new(RwLock::new(client.clone())),
             config: Arc::new(Mutex::new(config)),
-            plugin_registry: Arc::new(RwLock::new(PluginRegistry::new())),
+            plugin_registry: Arc::new(RwLock::new(PluginRegistry::new(client))),
         })
     }
 

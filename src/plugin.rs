@@ -1,16 +1,19 @@
 use async_trait::async_trait;
 use log::{debug, error};
-use matrix_sdk::events::room::message::{
-    AudioMessageEventContent, EmoteMessageEventContent, FileMessageEventContent,
-    ImageMessageEventContent, LocationMessageEventContent, NoticeMessageEventContent,
-    ServerNoticeMessageEventContent, TextMessageEventContent, VideoMessageEventContent,
+use matrix_sdk::{
+    events::room::message::{
+        AudioMessageEventContent, EmoteMessageEventContent, FileMessageEventContent,
+        ImageMessageEventContent, LocationMessageEventContent, NoticeMessageEventContent,
+        ServerNoticeMessageEventContent, TextMessageEventContent, VideoMessageEventContent,
+    },
+    Client,
 };
 use matrix_sdk_common::identifiers::{RoomId, UserId};
 
 use crate::Error;
 
-#[derive(Default)]
 pub struct PluginRegistry {
+    client: Client,
     plugins: Vec<Box<dyn Plugin>>,
 }
 
@@ -29,7 +32,7 @@ pub trait Plugin: Send + Sync {
             .expect("could not extract module name")
     }
 
-    fn new() -> Result<Self, Error>
+    fn new(client: Client) -> Result<Self, Error>
     where
         Self: Sized;
 
@@ -117,15 +120,18 @@ pub trait Plugin: Send + Sync {
 
 impl PluginRegistry {
     /// Constructs and returns a new plugin registry
-    pub fn new() -> PluginRegistry {
-        PluginRegistry { plugins: vec![] }
+    pub fn new(client: Client) -> PluginRegistry {
+        PluginRegistry {
+            client,
+            plugins: vec![],
+        }
     }
 
     /// Instantiates the given trait and adds it to the registry
     pub fn register<P: Plugin + 'static>(&mut self) -> Result<(), Error> {
         debug!("Registering plugin {}", std::any::type_name::<P>());
 
-        let plugin = P::new();
+        let plugin = P::new(self.client.clone());
 
         match plugin {
             Ok(plugin) => {
@@ -149,12 +155,14 @@ impl PluginRegistry {
 mod test {
     use super::*;
 
-    struct TestPlugin {}
+    struct TestPlugin {
+        client: Client,
+    }
 
     #[async_trait]
     impl Plugin for TestPlugin {
-        fn new() -> Result<TestPlugin, Error> {
-            Ok(TestPlugin {})
+        fn new(client: Client) -> Result<TestPlugin, Error> {
+            Ok(TestPlugin { client })
         }
 
         async fn on_room_text_message(
@@ -168,7 +176,9 @@ mod test {
 
     #[test]
     fn test_register_plugin() {
-        let mut registry = PluginRegistry::new();
+        let url: url::Url = "http://example.com".parse().unwrap();
+        let client = Client::new(url).unwrap();
+        let mut registry = PluginRegistry::new(client);
 
         registry.register::<TestPlugin>().unwrap();
     }
