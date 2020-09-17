@@ -1,5 +1,3 @@
-use crate::plugin::Plugin;
-use crate::Error;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use matrix_sdk::{
@@ -14,6 +12,9 @@ use matrix_sdk::{
 use matrix_sdk_common::identifiers::{RoomId, UserId};
 use rand::seq::IteratorRandom;
 use regex::Regex;
+
+use crate::plugin::Plugin;
+use crate::Error;
 
 lazy_static! {
     pub static ref CHOICES_REQUEST: Regex =
@@ -47,13 +48,19 @@ impl Plugin for ChoicesPlugin {
                         .choose(&mut rand::thread_rng())
                         .unwrap_or_else(|| &"something went wrong");
 
-                    let message = format!("{}: {}", user.localpart(), choice);
+                    let plain_message = format!("{}: {}", user.localpart(), choice);
+                    let html_message = format!(
+                        "<a href=\"https://matrix.to/#/{}\">{}</a>: {}",
+                        user.as_str(),
+                        user.localpart(),
+                        choice
+                    );
 
                     let content = AnyMessageEventContent::RoomMessage(MessageEventContent::Text(
                         TextMessageEventContent {
-                            body: message.clone(),
+                            body: plain_message,
                             formatted: Some(FormattedBody {
-                                body: message,
+                                body: html_message,
                                 format: MessageFormat::Html,
                             }),
                             relates_to: None,
