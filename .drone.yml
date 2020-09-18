@@ -29,6 +29,17 @@ steps:
     - cargo test
     - git rev-parse HEAD > .tags
 
+- name: docker
+  image: plugins/docker
+  settings:
+    repo: meta-matrix
+    registry:
+      from_secret: docker_registry
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
 - name: release
   image: rust:1.46
   volumes:
@@ -62,7 +73,6 @@ steps:
     acl: public-read
     region: nl-ams
     endpoint: https://s3.nl-ams.scw.cloud
-
 ---
 kind: pipeline
 name: rust-nightly
@@ -97,6 +107,6 @@ steps:
 
 ---
 kind: signature
-hmac: cb1087dd0c0b93afec2b22c5cafede377bd78b45b14ec7ffe543a4ea6651c02e
+hmac: afb8484a5bdacf309bef93f574b4777571a73ed63849f1f5dbf16c5b8bbcc57e
 
 ...
