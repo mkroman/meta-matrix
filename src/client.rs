@@ -111,7 +111,6 @@ impl EventEmitter for PluginEventDispatcher {
                             .await;
                     }
                 }
-                _ => {}
             }
         }
     }
@@ -152,7 +151,7 @@ impl MatrixClient {
             .await?;
 
         // Sync to skip old messages
-        client.sync(SyncSettings::default()).await?;
+        client.sync_once(SyncSettings::default()).await?;
 
         client
             .add_event_emitter(Box::new(PluginEventDispatcher::new(self.clone())))
@@ -167,7 +166,7 @@ impl MatrixClient {
 
         // Sync forever with our stored token
         let settings = SyncSettings::default().token(client.sync_token().await.unwrap());
-        client.sync_forever(settings, |_| async {}).await;
+        client.sync(settings).await;
 
         Ok(())
     }
